@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fetch = require("node-fetch");
 const { Telegraf } = require('telegraf');
+const { Keyboard } = require('telegram-keyboard');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 const baseUrl = "https://api.tfl.gov.uk/";
@@ -46,8 +47,12 @@ bot.command('check', async (ctx) => {
 bot.on('text', async (ctx) => {
   const lines = getLines()
   const keyboard = Keyboard.make([
-    `${lines}`
+    `Bakerloo`, `Central`
   ])
+
+  await ctx.reply('Choose your line', keyboard.reply())
+  await ctx.reply('Choose your line', keyboard.inline())
+
 })
 
 bot.launch();
