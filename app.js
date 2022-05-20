@@ -18,7 +18,6 @@ async function getLines() {
   return response.map(item => item.name)
 }
 
-
 bot.command('start', (ctx) => {
   console.log(ctx.from)
   bot.telegram.sendMessage(ctx.chat.id, 'Hello there! Welcome to the London Tube Bot', {})
@@ -47,7 +46,7 @@ bot.command('check', async (ctx) => {
 bot.on('text', async (ctx) => {
   const lines = getLines()
   const keyboard = Keyboard.make([
-    `Bakerloo`, `Central`
+    'Bakerloo', 'Central', 'Circle', 'District', 'Hammersmith & City', 'Jubilee', 'Metropolitan', 'Northern', 'Piccadilly', 'Victoria', 'Water', 'London Overground', 'TfL Rail', 'DLR'    
   ])
 
   await ctx.reply('Choose your line', keyboard.reply())
