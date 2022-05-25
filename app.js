@@ -1,6 +1,7 @@
 require("dotenv").config();
 const fetch = require("node-fetch");
-const { Telegraf } = require("telegraf");
+const { Telegraf, Scenes, session } = require("telegraf");
+const arrivals = require("./controllers/arrivals");
 const { Keyboard } = require("telegram-keyboard");
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -18,16 +19,16 @@ const tubeLines = [
   "Northern",
   "Piccadilly",
   "Victoria",
-  "Waterloo",
+  "Waterloo & City",
 ];
 
-async function getCall(url) {
+const getCall = async (url) => {
   const response = await fetch(url);
   const json = await response.json();
   return json;
-}
+};
 
-async function getLineStatus(line) {
+const getLineStatus = async (line) => {
   if (line.match("&")) {
     line = line.replace(/ & /, "-");
   }
@@ -45,7 +46,7 @@ async function getLineStatus(line) {
     const desc = disruption.description;
     return `${desc}`;
   }
-}
+};
 
 
 bot.command("start", (ctx) => {
@@ -65,10 +66,10 @@ bot.command("all", async (ctx) => {
   lineNames.forEach((line, index) => {
     let marker = "";
     if (lineStatus[index] === "Good Service") {
-      marker = "🟢";
+      marker = "✅";
     }
     else {
-      marker = "🔴";
+      marker = "⭕";
     }
     status.push(`${line}: ${lineStatus[index]} ${marker}`);
   });
@@ -81,7 +82,7 @@ bot.command("all", async (ctx) => {
 bot.command("lines", async (ctx) => {
   const keyboard = Keyboard.make([
     ["Bakerloo", "Central", "Circle"],
-    ["District", "Waterloo", "Jubilee"],
+    ["District", "Waterloo & City", "Jubilee"],
     ["Metropolitan", "Northern", "Piccadilly"],
     ["Victoria", "Hammersmith & City"]
   ]).reply();
@@ -96,19 +97,27 @@ bot.hears(tubeLines, async (ctx) => {
   ctx.reply(status);
 });
 
-// Handle other texts sent to bot
+const stage = new Scenes.Stage([arrivals]);
+bot.use(session());
+bot.use(stage.middleware());
+
+bot.command("arrivals", Scenes.Stage.enter("ARRIVALS_WIZARD"));
+
+// All other routes, return usage
 bot.on("text", async (ctx) => {
   const message = `
-  Welcome to the London Tube Bot! 🚇
-  Get updates by sending these commands:
-  /all - Check all lines
-  /lines - Choose a line to check
-  "Central" - Send a line name to check
+Welcome to the London Tube Bot! 🚇
+Get updates by sending these commands:
+/all - Check all lines
+/lines - Choose a line to check
+/arrivals - Check the next inbound/outbound train at your station
+"Central" - Send a line name to check
   `;
 
   ctx.reply(message);
 });
 
+// Error handler
 bot.catch((err, ctx) => {
   console.log(`Oops, something went wrong for ${ctx.updateType}`, err);
 });
