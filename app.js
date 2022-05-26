@@ -1,8 +1,10 @@
 require("dotenv").config();
 const fetch = require("node-fetch");
 const { Telegraf, Scenes, session } = require("telegraf");
+
 const arrivals = require("./controllers/arrivals");
-const { Keyboard } = require("telegram-keyboard");
+const { getCall } = require("./utils/helpers");
+const { linesKeyboard } = require("./utils/keyboards");
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 const baseUrl = "https://api.tfl.gov.uk/";
@@ -21,12 +23,6 @@ const tubeLines = [
   "Victoria",
   "Waterloo & City",
 ];
-
-const getCall = async (url) => {
-  const response = await fetch(url);
-  const json = await response.json();
-  return json;
-};
 
 const getLineStatus = async (line) => {
   if (line.match("&")) {
@@ -48,7 +44,6 @@ const getLineStatus = async (line) => {
   }
 };
 
-
 bot.command("start", (ctx) => {
   bot.telegram.sendMessage(ctx.chat.id, "Hello there! Welcome to the London Tube Bot", {});
 });
@@ -57,44 +52,50 @@ bot.command("all", async (ctx) => {
   ctx.reply("Hold on, checking...");
   const url = baseUrl + "line/mode/tube/status";
 
-  const data = await getCall(url);
+  try {
+    const data = await getCall(url);
 
-  const lineNames = data.map(item => item.name);
-  const lineStatus = data.map(item => item.lineStatuses[0].statusSeverityDescription);
+    const lineNames = data.map(item => item.name);
+    const lineStatus = data.map(item => item.lineStatuses[0].statusSeverityDescription);
 
-  const status = [];
-  lineNames.forEach((line, index) => {
-    let marker = "";
-    if (lineStatus[index] === "Good Service") {
-      marker = "✅";
-    }
-    else {
-      marker = "⭕";
-    }
-    status.push(`${line}: ${lineStatus[index]} ${marker}`);
-  });
+    const status = [];
+    lineNames.forEach((line, index) => {
+      let marker = "";
+      if (lineStatus[index] === "Good Service") {
+        marker = "✅";
+      }
+      else if (lineStatus[index] === "Service Closed") {
+        marker = "⚫";
+      }
+      else {
+        marker = "⭕";
+      }
+      status.push(`${marker} ${line}: ${lineStatus[index]}`);
+    });
 
-  const message = status.join("\r\n");
+    const message = status.join("\r\n");
 
-  ctx.reply(message);
+    ctx.reply(message);
+  }
+  catch (error) {
+    console.log(error);
+  }
+
 });
 
 bot.command("lines", async (ctx) => {
-  const keyboard = Keyboard.make([
-    ["Bakerloo", "Central", "Circle"],
-    ["District", "Waterloo & City", "Jubilee"],
-    ["Metropolitan", "Northern", "Piccadilly"],
-    ["Victoria", "Hammersmith & City"]
-  ]).reply();
-
-  ctx.reply("Pick a line", keyboard);
-
+  ctx.reply("Pick a line:", linesKeyboard.reply());
 });
 
 bot.hears(tubeLines, async (ctx) => {
   ctx.reply("Hold on, checking...");
-  const status = await getLineStatus(ctx.message.text);
-  ctx.reply(status);
+  try {
+    const status = await getLineStatus(ctx.message.text);
+    ctx.reply(status);
+  }
+  catch (error) {
+    console.log(error);
+  }
 });
 
 const stage = new Scenes.Stage([arrivals]);
@@ -103,10 +104,10 @@ bot.use(stage.middleware());
 
 bot.command("arrivals", Scenes.Stage.enter("ARRIVALS_WIZARD"));
 
-// All other routes, return usage
+// All other routes, return usage message
 bot.on("text", async (ctx) => {
   const message = `
-Welcome to the London Tube Bot! 🚇
+🚇 Welcome to the London Tube Bot! 
 Get updates by sending these commands:
 /all - Check all lines
 /lines - Choose a line to check
@@ -117,9 +118,10 @@ Get updates by sending these commands:
   ctx.reply(message);
 });
 
-// Error handler
 bot.catch((err, ctx) => {
-  console.log(`Oops, something went wrong for ${ctx.updateType}`, err);
+  console.log(`Oops, something went wrong with ${err}`);
+  ctx.reply("Sorry about that. Something went wrong. There's a bug to catch!");
+
 });
 
 bot.launch();

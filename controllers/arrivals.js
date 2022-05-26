@@ -1,11 +1,7 @@
 const { Scenes } = require("telegraf");
 const Wizard = Scenes.WizardScene;
-
-const getCall = async (url) => {
-  const response = await fetch(url);
-  const json = await response.json();
-  return json;
-};
+const { getCall } = require("../utils/helpers");
+const { YNKeyboard } = require("../utils/keyboards");
 
 const arrivals = new Wizard(
   "ARRIVALS_WIZARD",
@@ -16,41 +12,66 @@ const arrivals = new Wizard(
   // Ask for station name
   async (ctx) => {
     const query = ctx.message.text;
-    const res = await getCall(stoppointUrl + query);
-    ctx.wizard.state.stationId = res.matches[0].id;
-    const result = res.matches[0].name;
+    try {
+      const res = await getCall(stoppointUrl + query);
 
-    ctx.reply(`Is it ${result}? Send Y or N to continue.`);
-    return ctx.wizard.next();
+      ctx.wizard.state.stationId = res.matches[0].id;
+      const result = res.matches[0].name;
+
+      // Use inline keyboard for station validation
+      ctx.reply(`Is it ${result}?`, YNKeyboard.reply());
+
+      return ctx.wizard.next();
+    }
+    catch (error) {
+      console.log(error);
+      return ctx.scene.leave();
+    }
   },
   // Validate station with user
   async (ctx) => {
-    if (ctx.message.text === "Y" || ctx.message.text === "Yes") {
+    if (ctx.message.text.toLowerCase() === "y" || ctx.message.text.toLowerCase() === "yes") {
       ctx.reply("Got it! Looking it up... ⏳");
 
       const stationId = ctx.wizard.state.stationId;
-      const arrivalsList = await getCall(arrivalsUrl + stationId + "/Arrivals");
-      const timeOrderedList = arrivalsList.sort((a, b) => (a.timeToStation - b.timeToStation));
 
-      const outboundTrain = timeOrderedList.find(item => item.direction === "outbound");
-      const inboundTrain = timeOrderedList.find(item => item.direction === "inbound");
+      try {
+        const arrivalsList = await getCall(arrivalsUrl + stationId + "/Arrivals");
 
-      const outboundTime = outboundTrain.expectedArrival.slice(11, -1);
-      const inboundTime = inboundTrain.expectedArrival.slice(11, -1);
+        // Validate response 
+        if (arrivalsList.length === 0) {
+          ctx.reply("Something went wrong! Try again later.");
+          return ctx.scene.leave();
+        }
 
-      ctx.reply(`
-The next station outbound on ${outboundTrain.lineName} line will arrive in 
+        const timeOrderedList = arrivalsList.sort((a, b) => (a.timeToStation - b.timeToStation));
+
+        const outboundTrain = timeOrderedList.find(item => item.direction === "outbound");
+        console.log(outboundTrain);
+        const inboundTrain = timeOrderedList.find(item => item.direction === "inbound");
+        console.log(inboundTrain);
+
+        const outboundTime = outboundTrain.expectedArrival.slice(11, -1);
+        const inboundTime = inboundTrain.expectedArrival.slice(11, -1);
+
+        ctx.reply(`
+🚆 The next outbound train on ${outboundTrain.lineName} line will arrive at 
 ${outboundTime} on ${outboundTrain.platformName}.
       `);
 
-      ctx.reply(`
-The next station inbound on ${inboundTrain.lineName} line will arrive in 
+        ctx.reply(`
+🚆 The next inbound train on ${inboundTrain.lineName} line will arrive at 
 ${inboundTime} on ${inboundTrain.platformName}.
       `);
 
-      ctx.scene.leave();
+        return ctx.scene.leave();
+      }
+      catch (error) {
+        console.log(error);
+        return ctx.scene.leave();
+      }
     }
-    // Station not found
+    // If the station was not found
     else {
       ctx.reply("Gotta be more specific! What is your station?");
       ctx.wizard.back();
