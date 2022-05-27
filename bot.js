@@ -129,6 +129,6 @@ if (process.env.NODE_ENV === "development") {
   bot.launch();
 }
 else if (process.env.NODE_ENV === "production") {
-  bot.telegram.setWebhook(process.env.HEROKU_URL + bot.token);
+  bot.telegram.setWebhook(process.env.HEROKU_URL + process.env.BOT_TOKEN);
 }
 module.exports = bot.webhookCallback(`${process.env.HEROKU_URL}`);
