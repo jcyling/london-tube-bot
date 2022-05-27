@@ -11,8 +11,7 @@ app.get("/", (req, res) => {
 });
 
 app.post(`/${process.env.BOT_TOKEN}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.status(200).json({ message: "ok" });
+  return bot.handleUpdate(req.body, res);
 
 });
 
