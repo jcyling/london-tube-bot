@@ -30,7 +30,7 @@ const tubeLines = [
 ];
 
 app.get("/", (req, res) => {
-  return res.body("Hi, please find this bot on Telegram @LondonTubeBot!");
+  return res.status(200).send("Hi, please find this bot on Telegram @LondonTubeBot!");
 });
 
 app.post("/", (req, res, next) => {
