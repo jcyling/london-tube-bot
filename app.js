@@ -6,7 +6,6 @@ const bot = require("./bot");
 const app = express();
 app.use(express.json());
 
-
 app.get("/", (req, res) => {
   return res.status(200).send("Welcome to the London Tube Bot API. Find this bot on Telegram @LondonTubeBot.");
 });
