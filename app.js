@@ -1,4 +1,5 @@
 require("dotenv").config();
+const express = require("express");
 const fetch = require("node-fetch");
 const { Telegraf, Scenes, session } = require("telegraf");
 
@@ -8,6 +9,10 @@ const { linesKeyboard } = require("./utils/keyboards");
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 const baseUrl = "https://api.tfl.gov.uk/";
+
+// Start and configure express
+const app = express();
+app.use(express.json());
 
 // Tube lines
 const tubeLines = [
@@ -24,89 +29,92 @@ const tubeLines = [
   "Waterloo & City",
 ];
 
-const getLineStatus = async (line) => {
-  if (line.match("&")) {
-    line = line.replace(/ & /, "-");
-  }
-  const response = await fetch(baseUrl + `line/${line}/status`);
-  const data = await response.json();
-  const status = data[0].lineStatuses[0].statusSeverityDescription;
+app.post("/", (req, res) => {
 
-  // Line has good service
-  if (status === "Good Service") {
-    return `${line}: ${status}`;
-  }
-  // Line has disruptions, return details
-  else {
-    const disruption = data[0].lineStatuses[0].disruption;
-    const desc = disruption.description;
-    return `${desc}`;
-  }
-};
+  const getLineStatus = async (line) => {
+    if (line.match("&")) {
+      line = line.replace(/ & /, "-");
+    }
+    const response = await fetch(baseUrl + `line/${line}/status`);
+    const data = await response.json();
+    const status = data[0].lineStatuses[0].statusSeverityDescription;
 
-bot.command("start", (ctx) => {
-  bot.telegram.sendMessage(ctx.chat.id, "Hello there! Welcome to the London Tube Bot", {});
-});
+    // Line has good service
+    if (status === "Good Service") {
+      return `${line}: ${status}`;
+    }
+    // Line has disruptions, return details
+    else {
+      const disruption = data[0].lineStatuses[0].disruption;
+      const desc = disruption.description;
+      return `${desc}`;
+    }
+  };
 
-bot.command("all", async (ctx) => {
-  ctx.reply("Hold on, checking...");
-  const url = baseUrl + "line/mode/tube/status";
+  bot.command("start", (ctx) => {
+    bot.telegram.sendMessage(ctx.chat.id, "Hello there! Welcome to the London Tube Bot", {});
+    res.send(200);
+  });
 
-  try {
-    const data = await getCall(url);
+  bot.command("all", async (ctx) => {
+    ctx.reply("Hold on, checking...");
+    const url = baseUrl + "line/mode/tube/status";
 
-    const lineNames = data.map(item => item.name);
-    const lineStatus = data.map(item => item.lineStatuses[0].statusSeverityDescription);
+    try {
+      const data = await getCall(url);
 
-    const status = [];
-    lineNames.forEach((line, index) => {
-      let marker = "";
-      if (lineStatus[index] === "Good Service") {
-        marker = "✅";
-      }
-      else if (lineStatus[index] === "Service Closed") {
-        marker = "⚫";
-      }
-      else {
-        marker = "⭕";
-      }
-      status.push(`${marker} ${line}: ${lineStatus[index]}`);
-    });
+      const lineNames = data.map(item => item.name);
+      const lineStatus = data.map(item => item.lineStatuses[0].statusSeverityDescription);
 
-    const message = status.join("\r\n");
+      const status = [];
+      lineNames.forEach((line, index) => {
+        let marker = "";
+        if (lineStatus[index] === "Good Service") {
+          marker = "✅";
+        }
+        else if (lineStatus[index] === "Service Closed") {
+          marker = "⚫";
+        }
+        else {
+          marker = "⭕";
+        }
+        status.push(`${marker} ${line}: ${lineStatus[index]}`);
+      });
 
-    ctx.reply(message);
-  }
-  catch (error) {
-    console.log(error);
-  }
+      const message = status.join("\r\n");
 
-});
+      ctx.reply(message);
+    }
+    catch (error) {
+      console.log(error);
+    }
 
-bot.command("lines", async (ctx) => {
-  ctx.reply("Pick a line:", linesKeyboard.reply());
-});
+  });
 
-bot.hears(tubeLines, async (ctx) => {
-  ctx.reply("Hold on, checking...");
-  try {
-    const status = await getLineStatus(ctx.message.text);
-    ctx.reply(status);
-  }
-  catch (error) {
-    console.log(error);
-  }
-});
+  bot.command("lines", async (ctx) => {
+    ctx.reply("Pick a line:", linesKeyboard.reply());
+  });
 
-const stage = new Scenes.Stage([arrivals]);
-bot.use(session());
-bot.use(stage.middleware());
+  bot.hears(tubeLines, async (ctx) => {
+    ctx.reply("Hold on, checking...");
+    try {
+      const status = await getLineStatus(ctx.message.text);
+      ctx.reply(status);
+    }
+    catch (error) {
+      console.log(error);
+    }
+  });
 
-bot.command("arrivals", Scenes.Stage.enter("ARRIVALS_WIZARD"));
+  const stage = new Scenes.Stage([arrivals]);
+  bot.use(session());
+  bot.use(stage.middleware());
 
-// All other routes, return usage message
-bot.on("text", async (ctx) => {
-  const message = `
+  bot.command("arrivals", Scenes.Stage.enter("ARRIVALS_WIZARD"));
+
+  // All other routes, return usage message
+  bot.on("text", async (ctx) => {
+    const message = `
 🚇 Welcome to the London Tube Bot! 
 Get updates by sending these commands:
 /all - Check all lines
@@ -115,13 +123,18 @@ Get updates by sending these commands:
 "Central" - Send a line name to check
   `;
 
-  ctx.reply(message);
+    ctx.reply(message);
+  });
+
+  bot.catch((err, ctx) => {
+    console.log(`Oops, something went wrong with ${err}`);
+    ctx.reply("Sorry about that. Something went wrong. There's a bug to catch!");
+  });
+
+  bot.launch();
+
 });
 
-bot.catch((err, ctx) => {
-  console.log(`Oops, something went wrong with ${err}`);
-  ctx.reply("Sorry about that. Something went wrong. There's a bug to catch!");
-
+app.listen(3000, () => {
+  console.log("Listening on port 3000");
 });
-
-bot.launch();
