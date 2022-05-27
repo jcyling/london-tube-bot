@@ -1,17 +1,22 @@
 require("dotenv").config();
 const express = require("express");
+const morgan = require("morgan");
 const bot = require("./bot");
 
 // Start and configure express
 const app = express();
-app.use(express.json());
+app.use(morgan("tiny"));
 
 app.get("/", (req, res) => {
   return res.status(200).send("Welcome to the London Tube Bot API. Find this bot on Telegram @LondonTubeBot.");
 });
 
 app.post(`/${process.env.BOT_TOKEN}`, (req, res) => {
-  return bot.handleUpdate(req.body, res);
+  const update = req.body;
+  bot.handleUpdate(update)
+    .finally(() => {
+      res.send("success");
+    });
 
 });
 
