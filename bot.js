@@ -4,7 +4,6 @@ const { Telegraf, Scenes, session } = require("telegraf");
 const arrivals = require("./controllers/arrivals");
 const { getCall } = require("./utils/helpers");
 const { linesKeyboard } = require("./utils/keyboards");
-const bot = new Telegraf(process.env.BOT_TOKEN);
 
 const baseUrl = "https://api.tfl.gov.uk/";
 
@@ -42,6 +41,9 @@ const getLineStatus = async (line) => {
     return `${desc}`;
   }
 };
+
+// Initialize bot
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
 bot.command("start", (ctx) => {
   bot.telegram.sendMessage(ctx.chat.id, "Hello there! Welcome to the London Tube Bot", {});
@@ -122,4 +124,10 @@ bot.catch((err, ctx) => {
   ctx.reply("Sorry about that. Something went wrong. There's a bug to catch!");
 });
 
-bot.launch();
+// Start bot
+if (process.env.NODE_ENV === "development") {
+  bot.launch();
+}
+else if (process.env.NODE_ENV === "production") {
+  bot.telegram.setWebhook(`${process.env.HEROKU_URL}:443/${process.env.BOT_TOKEN}`);
+};

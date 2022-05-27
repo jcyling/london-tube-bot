@@ -47,9 +47,7 @@ const arrivals = new Wizard(
         const timeOrderedList = arrivalsList.sort((a, b) => (a.timeToStation - b.timeToStation));
 
         const outboundTrain = timeOrderedList.find(item => item.direction === "outbound");
-        console.log(outboundTrain);
         const inboundTrain = timeOrderedList.find(item => item.direction === "inbound");
-        console.log(inboundTrain);
 
         const outboundTime = outboundTrain.expectedArrival.slice(11, -1);
         const inboundTime = inboundTrain.expectedArrival.slice(11, -1);
