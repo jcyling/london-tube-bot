@@ -124,11 +124,4 @@ bot.catch((err, ctx) => {
   ctx.reply("Sorry about that. Something went wrong. There's a bug to catch!");
 });
 
-// Start bot
-if (process.env.NODE_ENV === "development") {
-  bot.launch();
-}
-else if (process.env.NODE_ENV === "production") {
-  bot.telegram.setWebhook(process.env.HEROKU_URL + process.env.BOT_TOKEN);
-}
 module.exports = bot;
