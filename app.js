@@ -29,7 +29,7 @@ const tubeLines = [
   "Waterloo & City",
 ];
 
-app.post("/", (req, res) => {
+app.post("/", (req, res, next) => {
 
   const getLineStatus = async (line) => {
     if (line.match("&")) {
@@ -86,7 +86,7 @@ app.post("/", (req, res) => {
       ctx.reply(message);
     }
     catch (error) {
-      console.log(error);
+      next(error);
     }
 
   });
@@ -102,7 +102,7 @@ app.post("/", (req, res) => {
       ctx.reply(status);
     }
     catch (error) {
-      console.log(error);
+      next(error);
     }
   });
 
@@ -133,6 +133,10 @@ Get updates by sending these commands:
 
   bot.launch();
 
+});
+
+app.use((err, req, res, next) => {
+  console.log(err);
 });
 
 app.listen(process.env.port, () => {
