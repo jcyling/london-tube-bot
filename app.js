@@ -29,6 +29,10 @@ const tubeLines = [
   "Waterloo & City",
 ];
 
+app.get("/", (req, res) => {
+  return res.body("Hi, please find this bot on Telegram @LondonTubeBot!");
+});
+
 app.post("/", (req, res, next) => {
 
   const getLineStatus = async (line) => {
@@ -139,6 +143,6 @@ app.use((err, req, res, next) => {
   console.log(err);
 });
 
-app.listen(process.env.port, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log("Listening...");
 });
