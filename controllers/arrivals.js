@@ -3,6 +3,8 @@ const Wizard = Scenes.WizardScene;
 const { getCall } = require("../utils/helpers");
 const { YNKeyboard } = require("../utils/keyboards");
 
+const baseUrl = "https://api.tfl.gov.uk/";
+
 const arrivals = new Wizard(
   "ARRIVALS_WIZARD",
   (ctx) => {
@@ -13,16 +15,21 @@ const arrivals = new Wizard(
   async (ctx) => {
     const query = ctx.message.text;
     try {
-      const res = await getCall(stoppointUrl + query);
+      const res = await getCall(baseUrl + "StopPoint/Search?modes=tube&query=" + query);
+      
+      if (res.total === 0) {
+        ctx.reply("Gotta be more specific! What is your station?");
+        return ctx.wizard.selectStep(1);
+      }
 
       ctx.wizard.state.stationId = res.matches[0].id;
       let result = res.matches[0].name;
-      // If the station is a HUB
+
+      // If api response id is a HUB, use TfL API to find tube station ID
       if (ctx.wizard.state.stationId.match(/HUB/)) {
-        const res = await getCall(baseUrl + ctx.wizard.state.stationId);
+        const res = await getCall(baseUrl + "StopPoint/" + ctx.wizard.state.stationId);
         const tubeInfo = res.children.find(item => item.stopType === "NaptanMetroStation");
         ctx.wizard.state.stationId = tubeInfo.id;
-        console.log(result);
       }
 
       // Use inline keyboard for station validation
@@ -37,13 +44,14 @@ const arrivals = new Wizard(
   },
   // Validate station with user
   async (ctx) => {
+    // If the station was found
     if (ctx.message.text.toLowerCase() === "y" || ctx.message.text.toLowerCase() === "yes") {
       ctx.reply("Got it! Looking it up... ⏳");
 
       const stationId = ctx.wizard.state.stationId;
-
+      
       try {
-        const arrivalsList = await getCall(baseUrl + stationId + "/Arrivals");
+        const arrivalsList = await getCall(baseUrl + "StopPoint/" + stationId + "/Arrivals");
 
         // Validate response 
         if (arrivalsList.length === 0) {
@@ -83,8 +91,5 @@ ${inboundTime} on ${inboundTrain.platformName}.
     }
   },
 );
-
-const stoppointUrl = "https://api.tfl.gov.uk/StopPoint/Search?modes=tube&query=";
-const baseUrl = "https://api.tfl.gov.uk/StopPoint/";
 
 module.exports = arrivals;
