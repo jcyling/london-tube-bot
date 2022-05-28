@@ -16,7 +16,14 @@ const arrivals = new Wizard(
       const res = await getCall(stoppointUrl + query);
 
       ctx.wizard.state.stationId = res.matches[0].id;
-      const result = res.matches[0].name;
+      let result = res.matches[0].name;
+      // If the station is a HUB
+      if (ctx.wizard.state.stationId.match(/HUB/)) {
+        const res = await getCall(baseUrl + ctx.wizard.state.stationId);
+        const tubeInfo = res.children.find(item => item.stopType === "NaptanMetroStation");
+        ctx.wizard.state.stationId = tubeInfo.id;
+        console.log(result);
+      }
 
       // Use inline keyboard for station validation
       ctx.reply(`Is it ${result}?`, YNKeyboard.reply());
@@ -36,7 +43,7 @@ const arrivals = new Wizard(
       const stationId = ctx.wizard.state.stationId;
 
       try {
-        const arrivalsList = await getCall(arrivalsUrl + stationId + "/Arrivals");
+        const arrivalsList = await getCall(baseUrl + stationId + "/Arrivals");
 
         // Validate response 
         if (arrivalsList.length === 0) {
@@ -78,6 +85,6 @@ ${inboundTime} on ${inboundTrain.platformName}.
 );
 
 const stoppointUrl = "https://api.tfl.gov.uk/StopPoint/Search?modes=tube&query=";
-const arrivalsUrl = "https://api.tfl.gov.uk/StopPoint/";
+const baseUrl = "https://api.tfl.gov.uk/StopPoint/";
 
 module.exports = arrivals;

@@ -9,8 +9,8 @@ app.use(morgan("tiny"));
 
 // Start bot
 if (process.env.NODE_ENV === "development") {
-  // bot.launch();
-  bot.telegram.setWebhook(`${process.env.LT_URL}${process.env.BOT_TOKEN}`);
+  bot.launch();
+  // bot.telegram.setWebhook(`${process.env.LT_URL}${process.env.BOT_TOKEN}`);
 }
 else if (process.env.NODE_ENV === "production") {
   bot.telegram.setWebhook(`${process.env.HEROKU_URL}${process.env.BOT_TOKEN}`);
