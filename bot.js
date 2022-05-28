@@ -45,10 +45,6 @@ const getLineStatus = async (line) => {
 // Initialize bot
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-bot.command("start", (ctx) => {
-  bot.telegram.sendMessage(ctx.chat.id, "Hello there! Welcome to the London Tube Bot", {});
-});
-
 bot.command("all", async (ctx) => {
   ctx.reply("Hold on, checking...");
   const url = baseUrl + "line/mode/tube/status";
