@@ -14,8 +14,8 @@ Use the following commands:
 
 ## Libraries
 - Express - for setting up a webhook with Telegram
-- Telegraf - for Telegram bot
-- Telegram-keyboard - for Telegram inline-keyboard
+- Telegraf - a Telegram bot framework
+- Telegram-keyboard - a Telegram inline-keyboard builder
 - Morgan - for logging
 
 ## How does it work?
