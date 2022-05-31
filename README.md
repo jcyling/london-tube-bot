@@ -1,8 +1,5 @@
 *This bot is a work in progress (Dated: 25/05/2022).*
 
-<img src=/assets/images/london-tube-bot-all.gif width=400 height=865 />
-<img src=/assets/images/london-tube-bot-lines.gif width=400 height=865 />
-<img src=/assets/images/london-tube-bot-arrivals.gif width=400 height=865 />
 
 # London Tube Bot
 A telegram bot that lets you check the status of the London Underground.
@@ -11,9 +8,15 @@ A telegram bot that lets you check the status of the London Underground.
 Open Telegram and find `@LondonTubeBot`.
 
 Use the following commands:
-- `/check` - Checks all lines
+- `/all` - Checks all lines
+<img src=/assets/images/london-tube-bot-all.gif width=300 height=651 />
+
 - `/lines` - Pick a line using the provided keyboard
+<img src=/assets/images/london-tube-bot-lines.gif width=300 height=651 />
+
 - `/arrivals` - Check the next inbound and outbound train at a station
+<img src=/assets/images/london-tube-bot-arrivals.gif width=300 height=651 />
+
 - `Bakerloo` - Enter a valid line name to check its status
 
 ## Libraries
