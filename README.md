@@ -1,8 +1,8 @@
 *This bot is a work in progress (Dated: 25/05/2022).*
 
-<img src=/assets/images/london-tube-bot-all.gif width=200 height=865 />
-<img src=/assets/images/london-tube-bot-lines.gif width=200 height=865 />
-<img src=/assets/images/london-tube-bot-arrivals.gif width=200 height=865 />
+<img src=/assets/images/london-tube-bot-all.gif width=400 height=865 />
+<img src=/assets/images/london-tube-bot-lines.gif width=400 height=865 />
+<img src=/assets/images/london-tube-bot-arrivals.gif width=400 height=865 />
 
 # London Tube Bot
 A telegram bot that lets you check the status of the London Underground.
